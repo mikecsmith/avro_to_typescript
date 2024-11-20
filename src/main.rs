@@ -1,12 +1,13 @@
 mod avro_parser;
 mod errors;
 mod generate_ts_code;
-mod generate_types;
-mod generate_zod;
+mod schema_converter;
+mod type_converter;
 mod types;
 
 use crate::avro_parser::parse_avro_schema;
-use crate::generate_types::avro_to_swc_interface;
+use crate::schema_converter::convert_avro_schema;
+use crate::type_converter::TypeConverter;
 
 use clap::Parser;
 
@@ -22,7 +23,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     match parse_avro_schema(&args.schema) {
         Ok(schema) => {
-            let module_item = avro_to_swc_interface(&schema);
+            let converter = TypeConverter;
+            let module_item = convert_avro_schema(&schema, &converter);
             let ts_code = generate_ts_code::generate_ts_code(module_item)?;
 
             println!("{}", ts_code);
