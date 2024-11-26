@@ -1,11 +1,12 @@
 use crate::errors::GenerationError;
 use crate::types::GenerationResult;
 use avro_rs::{schema::RecordField, Schema};
-use swc_ecma_ast::*;
 
 pub trait SchemaConverter {
+    type TypeOutput;
+
     fn convert_record(&self, name: &str, fields: &[RecordField]) -> GenerationResult;
-    fn convert_type(&self, schema: &Schema) -> TsType;
+    fn convert_type(&self, schema: &Schema) -> Self::TypeOutput;
 }
 
 pub fn process_nested_records<C: SchemaConverter>(

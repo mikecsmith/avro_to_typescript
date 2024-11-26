@@ -7,6 +7,7 @@ use swc_ecma_ast::*;
 pub struct TypeConverter;
 
 impl SchemaConverter for TypeConverter {
+    type TypeOutput = TsType;
     fn convert_record(
         &self,
         name: &str,
