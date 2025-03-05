@@ -1,11 +1,17 @@
 [package]
 name = "avro_to_typescript"
+authors = ["Michael Smith <mike.c.smith85@gmail.com>"]
+description = "A CLI utility for converting Avro Schemas to Typescript Types"
 version = "0.1.0"
 edition = "2021"
+
+[[bin]]
+name = "att"
+path = "src/main.rs"
 
 [dependencies]
 avro-rs = "0.13"
 clap = { version = "4.5", features = ["derive"] }
-swc_common = "4.0.1"
-swc_ecma_ast = "4.0.1"
-swc_ecma_codegen = "4.0.2"
+swc_common = "8.0.0"
+swc_ecma_ast = "8.0.0"
+swc_ecma_codegen = "8.0.2"
