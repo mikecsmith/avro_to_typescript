@@ -24,8 +24,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     match parse_avro_schema(&args.schema) {
         Ok(schema) => {
             let converter = TypeConverter;
-            let module_item = convert_avro_schema(&schema, &converter);
-            let ts_code = generate_ts_code::generate_ts_code(module_item)?;
+            let module_items = convert_avro_schema(&schema, &converter)?;
+            let ts_code = generate_ts_code::generate_ts_code(module_items)?;
 
             println!("{}", ts_code);
             Ok(())
