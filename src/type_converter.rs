@@ -6,6 +6,44 @@ use swc_ecma_ast::*;
 
 pub struct TypeConverter;
 
+impl TypeConverter {
+    /// Checks if a field schema is a nullable union (i.e. contains `null`).
+    /// Returns `(is_optional, type)` where the type has `null` stripped from the union.
+    /// For example, `["null", "string"]` returns `(true, string)` and
+    /// `["null", "string", "int"]` returns `(true, string | number)`.
+    fn convert_field_type(&self, schema: &Schema) -> (bool, TsType) {
+        if let Schema::Union(union_schema) = schema {
+            let variants: Vec<&Schema> = union_schema.variants().iter().collect();
+            let has_null = variants.iter().any(|v| matches!(v, Schema::Null));
+
+            if has_null {
+                let non_null: Vec<&Schema> = variants
+                    .into_iter()
+                    .filter(|v| !matches!(v, Schema::Null))
+                    .collect();
+
+                let ts_type = if non_null.len() == 1 {
+                    self.convert_type(non_null[0])
+                } else {
+                    TsType::TsUnionOrIntersectionType(
+                        TsUnionOrIntersectionType::TsUnionType(TsUnionType {
+                            span: DUMMY_SP,
+                            types: non_null
+                                .iter()
+                                .map(|v| Box::new(self.convert_type(v)))
+                                .collect(),
+                        }),
+                    )
+                };
+
+                return (true, ts_type);
+            }
+        }
+
+        (false, self.convert_type(schema))
+    }
+}
+
 impl SchemaConverter for TypeConverter {
     type TypeOutput = TsType;
     fn convert_record(
@@ -21,6 +59,8 @@ impl SchemaConverter for TypeConverter {
         let properties = fields
             .iter()
             .map(|field| {
+                let (is_optional, ts_type) = self.convert_field_type(&field.schema);
+
                 TsTypeElement::TsPropertySignature(TsPropertySignature {
                     span: DUMMY_SP,
                     readonly: false,
@@ -31,10 +71,10 @@ impl SchemaConverter for TypeConverter {
                         ctxt: SyntaxContext::empty(),
                     })),
                     computed: false,
-                    optional: false,
+                    optional: is_optional,
                     type_ann: Some(Box::new(TsTypeAnn {
                         span: DUMMY_SP,
-                        type_ann: Box::new(self.convert_type(&field.schema)),
+                        type_ann: Box::new(ts_type),
                     })),
                 })
             })
