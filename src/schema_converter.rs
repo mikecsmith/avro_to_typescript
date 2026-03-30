@@ -15,13 +15,7 @@ pub fn process_nested_records<C: SchemaConverter>(
 ) -> GenerationResult {
     match schema {
         Schema::Record { name, fields, .. } => converter.convert_record(&name.name, fields),
-        Schema::Map(value_schema) => {
-            if let Schema::Record { name, fields, .. } = &**value_schema {
-                converter.convert_record(&name.name, fields)
-            } else {
-                Ok(Vec::new())
-            }
-        }
+        Schema::Map(value_schema) => process_nested_records(value_schema, converter),
         Schema::Union(union_schema) => {
             let mut items = Vec::new();
             for variant in union_schema.variants() {
@@ -29,13 +23,7 @@ pub fn process_nested_records<C: SchemaConverter>(
             }
             Ok(items)
         }
-        Schema::Array(item_schema) => {
-            if let Schema::Record { name, fields, .. } = &**item_schema {
-                converter.convert_record(&name.name, fields)
-            } else {
-                Ok(Vec::new())
-            }
-        }
+        Schema::Array(item_schema) => process_nested_records(item_schema, converter),
         _ => Ok(Vec::new()),
     }
 }
